@@ -1,17 +1,35 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <format>
 #include <stdexcept>
 #include <string_view>
+#include <unordered_map>
 
 namespace bookdb {
 
 enum class Genre { Fiction, NonFiction, SciFi, Biography, Mystery, Unknown };
 
 // Ваш код для constexpr преобразования строк в enum::Genre и наоборот здесь
+static constexpr std::array<std::pair<std::string_view, Genre>, 5> genres_arr{ {
+    {"Fiction", Genre::Fiction},
+    {"NonFiction", Genre::NonFiction},
+    {"SciFi", Genre::SciFi},
+    {"Biography", Genre::Biography},
+    {"Mystery", Genre::Mystery}
+}};
 
 constexpr Genre GenreFromString(std::string_view s) {
     // Ваш код здесь
+    auto it = std::find_if(genres_arr.begin(), genres_arr.end(), [s](
+        const std::pair<std::string_view, Genre>& elem) {
+        return elem.first == s;
+    });
+
+    if (it != genres_arr.end()) {
+        return it->second;
+    }
     return Genre::Unknown;
 }
 
@@ -26,6 +44,18 @@ struct Book {
     int read_count;
 
     // Ваш код для конструкторов здесь
+    constexpr Book(std::string_view _author, const std::string& _title, int _year, Genre _genre)
+        : author(_author)
+        , title(_title)
+        , year(_year)
+        , genre(_genre) {}
+
+    constexpr Book(std::string_view _author, const std::string& _title, int _year, std::string_view _genre)
+        : author(_author)
+        , title(_title)
+        , year(_year)
+        , genre(GenreFromString(_genre)) {}
+
 };
 }  // namespace bookdb
 
@@ -58,5 +88,16 @@ struct formatter<bookdb::Genre, char> {
 };
 
 // Ваш код для std::formatter<Book> здесь
+template <>
+struct formatter<bookdb::Book, char> {
+    template <typename FormatContext>
+    auto format(const bookdb::Book b, FormatContext &fc) const {
+        return format_to(fc.out(), "{}({}) by {}, {}. read {} times. rating {}", b.title, b.genre, b.author, b.year, b.read_count, b.rating);
+    }
+
+    constexpr auto parse(format_parse_context &ctx) {
+        return ctx.begin();  // Просто игнорируем пользовательский формат
+    }
+};
 
 }  // namespace std

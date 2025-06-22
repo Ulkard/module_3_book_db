@@ -5,10 +5,16 @@
 
 namespace bookdb {
 
-struct TransparentStringLess {};
+struct TransparentStringLess {
+    using is_transparent = void;
+};
 
-struct TransparentStringEqual {};
+struct TransparentStringEqual {
+    using is_transparent = void;
+};
 
-struct TransparentStringHash {};
+struct TransparentStringHash {
+    using is_transparent = void;
+};
 
 }  // namespace bookdb

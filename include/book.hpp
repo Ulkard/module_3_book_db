@@ -44,17 +44,18 @@ struct Book {
     int read_count;
 
     // Ваш код для конструкторов здесь
-    constexpr Book(std::string_view _author, const std::string& _title, int _year, Genre _genre)
+    constexpr Book(std::string_view _author, const std::string& _title, int _year, Genre _genre, double _rating, int _read_count)
         : author(_author)
         , title(_title)
         , year(_year)
-        , genre(_genre) {}
+        , genre(_genre)
+        , rating(_rating)
+        , read_count(_read_count) {}
 
-    constexpr Book(std::string_view _author, const std::string& _title, int _year, std::string_view _genre)
-        : author(_author)
-        , title(_title)
-        , year(_year)
-        , genre(GenreFromString(_genre)) {}
+    constexpr Book(std::string_view _author, const std::string& _title, int _year, std::string_view _genre, double _rating, int _read_count)
+        : Book(_author, _title, _year, GenreFromString(_genre), _rating, _read_count) {}
+
+    bool operator<=>(const Book &other) const = default;
 
 };
 }  // namespace bookdb

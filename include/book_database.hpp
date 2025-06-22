@@ -1,9 +1,13 @@
 #pragma once
 
+#include <cstddef>
+#include <iterator>
 #include <print>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
+#include <set>
 
 #include "book.hpp"
 #include "concepts.hpp"
@@ -15,21 +19,62 @@ template <BookContainerLike BookContainer = std::vector<Book>>
 class BookDatabase {
 public:
     // Type aliases
+    using value_type = BookContainer::value_type;
+    using reference = BookContainer::reference;
+    using pointer = BookContainer::pointer;
+    using iterator = BookContainer::iterator;
+    using const_iterator = BookContainer::const_iterator;
+    using difference_type = BookContainer::difference_type;
+    using size_type = BookContainer::size_type;
 
-    // Ваш код здесь
+    iterator begin() {
+        return books_.begin();
+    }
+    iterator end() {
+        return books_.end();
+    }
+    const_iterator begin() const {
+        return books_.begin();
+    }
+    const_iterator end() const {
+        return books_.end();
+    }
 
-    using AuthorContainer = BookContainer /* Ваш код здесь */;
-
+    using AuthorContainer = std::set<std::string>;
     BookDatabase() = default;
+    BookDatabase(std::initializer_list<Book> books) 
+        : books_(books) {}
 
-    void Clear() {
+    // Standard container interface methods
+    void clear() {
         books_.clear();
         authors_.clear();
     }
+    size_type size() {
+        return books_.size();
+    }
 
-    // Standard container interface methods
+    reference operator[](size_type i){
+        return books_[i];
+    }
 
-    // Ваш код здесь
+    void push_back(Book&& book) {
+        //TODO: save authors here?
+        books_.push_back(book);
+    }
+
+    template<typename... Args>
+    reference emplace_back(Args&&... args) {
+        return books_.emplace_back(std::forward<Args>(args)...);
+    }
+
+
+    const BookContainer& getBooks() const {
+        return books_;
+    }
+    const AuthorContainer& getAuthors() const {
+        return authors_;
+    }
 
 private:
     BookContainer books_;

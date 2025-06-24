@@ -13,8 +13,8 @@ concept BookContainerLike = true;
 template <typename T>
 concept BookIterator = true;
 
-template <typename S, typename I>
-concept BookSentinel = true;
+/*template <typename S, typename I>
+concept BookSentinel = true;*/
 
 template <typename P>
 concept BookPredicate = true;

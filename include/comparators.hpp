@@ -29,4 +29,18 @@ struct LessByAuthor {
     }
 };
 
+struct LessByRating {
+    using is_transparent = void;
+    
+    bool operator()(const Book& lhs, const Book& rhs) {
+        return lhs.rating < rhs.rating;
+    } 
+    bool operator()(const Book& lhs, double rhs) {
+        return lhs.rating < rhs;
+    }
+    bool operator()(double lhs, const Book& rhs) {
+        return lhs < rhs.rating;
+    }
+};
+
 }  // namespace bookdb::comp

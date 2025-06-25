@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <print>
@@ -40,17 +41,21 @@ public:
         return books_.end();
     }
 
-    using AuthorContainer = std::set<std::string>;
+    using AuthorContainer = std::set<std::string, std::less<>>;
     BookDatabase() = default;
     BookDatabase(std::initializer_list<Book> books) 
-        : books_(books) {}
+        : books_(books) {
+            for (Book& book : books_) {
+                extractAuthor(book);
+            }
+        }
 
     // Standard container interface methods
     void clear() {
         books_.clear();
         authors_.clear();
     }
-    size_type size() {
+    size_type size() const {
         return books_.size();
     }
 
@@ -59,13 +64,15 @@ public:
     }
 
     void push_back(Book&& book) {
-        //TODO: save authors here?
+        extractAuthor(book);
         books_.push_back(book);
     }
 
     template<typename... Args>
     reference emplace_back(Args&&... args) {
-        return books_.emplace_back(std::forward<Args>(args)...);
+        reference result = books_.emplace_back(std::forward<Args>(args)...);
+        extractAuthor(result);
+        return result;
     }
 
 
@@ -79,6 +86,13 @@ public:
 private:
     BookContainer books_;
     AuthorContainer authors_;
+
+    void extractAuthor(Book& book) {
+        if (!authors_.contains(book.author)) {
+            authors_.insert(std::string(book.author));
+        }
+        book.author = *authors_.find(book.author);
+    }
 };
 
 }  // namespace bookdb

@@ -3,12 +3,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include <flat_map>
 #include <iterator>
 #include <numeric>
 #include <random>
 #include <stdexcept>
 #include <string_view>
-#include <flat_map>
 
 #include "book.hpp"
 #include "book_database.hpp"
@@ -21,7 +21,7 @@ using VectorBookRefs = std::vector<std::reference_wrapper<const Book>>;
 template <BookContainerLike T, typename Comparator = TransparentStringLess>
 auto buildAuthorHistogramFlat(const BookDatabase<T> &db, Comparator comp = {}) {
     std::flat_map<std::string_view, size_t, Comparator> result;
-    for (const auto& book: db) {
+    for (const auto &book : db) {
         ++result[std::ref(book.author)];
     }
     return result;
@@ -29,41 +29,47 @@ auto buildAuthorHistogramFlat(const BookDatabase<T> &db, Comparator comp = {}) {
 
 template <BookContainerLike T>
 auto calculateGenreRatings(const BookDatabase<T> &db) {
-    std::flat_map<int, double> ratings;
-    std::flat_map<int, size_t> counters;
-    std::flat_map<int, double> result;
-    for (const auto& book: db) {
-        ratings[static_cast<int>(book.genre)] += book.rating;
-        ++counters[static_cast<int>(book.genre)];
+    struct GenreInfo {
+        double rating = 0;
+        size_t counter = 0;
+    };
+    std::flat_map<Genre, GenreInfo> genre_info;
+    std::flat_map<Genre, double> result;
+    for (const auto &book : db) {
+        Genre key = book.genre;
+        GenreInfo &current_info = genre_info[key];
+        current_info.rating += book.rating;
+        ++current_info.counter;
     }
-    std::transform(ratings.begin(), ratings.end(), 
-        counters.begin(), std::inserter(result, result.begin()),
-        [](const auto& rating, const auto& counter) -> decltype(result)::value_type {
-            return {rating.first, rating.second/counter.second};
-        }
-    );
+    std::transform(genre_info.begin(), genre_info.end(), std::inserter(result, result.begin()),
+                   [](const auto &elem) -> decltype(result)::value_type {
+                       return {elem.first, elem.second.rating / elem.second.counter};
+                   });
     return result;
 }
 
 template <BookContainerLike T>
 double calculateAverageRating(const BookDatabase<T> &db) {
-    return std::accumulate(db.begin(), db.end(), 0., [](double sum, const Book& book) {
-        return sum + book.rating;
-    }) / db.size();
+    return db.empty() ? 0 : std::accumulate(db.begin(), db.end(), 0., [](double sum, const Book &book) {
+                                return sum + book.rating;
+                            }) / db.size();
 }
 
 template <BookContainerLike T>
 VectorBookRefs sampleRandomBooks(const BookDatabase<T> &db, size_t N) {
     VectorBookRefs result;
-    std::sample(db.begin(), db.end(), std::back_inserter(result), N,
-                std::mt19937 { std::random_device{}() });
+    std::sample(db.begin(), db.end(), std::back_inserter(result), N, std::mt19937{std::random_device{}()});
     return result;
 }
 
 template <BookContainerLike T>
 VectorBookRefs getTopNBy(BookDatabase<T> &db, size_t N) {
-    std::sort(db.begin(), db.end(), comp::GreaterByRating());
-    return {db.begin(), db.begin() + std::min(N, db.size()-1)};
+    if (db.empty()) {
+        return {};
+    }
+    auto result_end = db.begin() + std::min(N, db.size() - 1);
+    std::nth_element(db.begin(), result_end, db.end(), comp::GreaterByRating());
+    return {db.begin(), result_end};
 }
 
 }  // namespace bookdb

@@ -9,9 +9,9 @@ using namespace bookdb::comp;
 namespace {
 auto makeBookDb() {
     return BookDatabase{{"Cixin", "Three-Body Problem", 2008, Genre::SciFi, 5.2, 1000},
-                            {"Dreeke", "Sizing People Up", 2020, "NonFiction", 5.8, 1000}};
+                        {"Dreeke", "Sizing People Up", 2020, "NonFiction", 5.8, 1000}};
 }
-} // anon ns
+}  // namespace
 
 TEST(Comparators, LessByAuthor) {
     BookDatabase db = makeBookDb();
@@ -27,7 +27,7 @@ TEST(Comparators, LessByAuthor) {
 
 TEST(Comparators, GreaterByRating) {
     BookDatabase db = makeBookDb();
-    
+
     // simple
     EXPECT_EQ(GreaterByRating()(db[0], db[1]), false);
     EXPECT_EQ(GreaterByRating()(db[1], db[0]), true);
@@ -36,4 +36,3 @@ TEST(Comparators, GreaterByRating) {
     EXPECT_EQ(GreaterByRating()(db[0], 5.8), false);
     EXPECT_EQ(GreaterByRating()(5.8, db[0]), true);
 }
-

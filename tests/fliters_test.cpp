@@ -8,12 +8,12 @@ using namespace bookdb;
 namespace {
 auto makeBookDb() {
     return BookDatabase{{"Cixin", "Three-Body Problem", 2008, Genre::SciFi, 5.2, 1000},
-                            {"Dreeke", "Sizing People Up", 2020, "NonFiction", 5.8, 1000},
-                            {"Brooks", "Mythical Man-Month", 1975, "NonFiction", 5.6, 1000}};
+                        {"Dreeke", "Sizing People Up", 2020, "NonFiction", 5.8, 1000},
+                        {"Brooks", "Mythical Man-Month", 1975, "NonFiction", 5.6, 1000}};
 }
-} // anon ns
+}  // namespace
 
-TEST(Filters, YearBetween) { 
+TEST(Filters, YearBetween) {
     BookDatabase db = makeBookDb();
     VectorBookRefs result = filterBooks(db.begin(), db.end(), YearBetween(1970, 2000));
     EXPECT_EQ(result.size(), 1);
@@ -21,32 +21,44 @@ TEST(Filters, YearBetween) {
 
     VectorBookRefs empty_result = filterBooks(db.begin(), db.end(), YearBetween(2000, 2005));
     EXPECT_EQ(empty_result.size(), 0);
+
+    BookDatabase empty_db{};
+    auto empty_db_result = filterBooks(empty_db.begin(), empty_db.end(), YearBetween(1970, 2000));
+    EXPECT_EQ(empty_db_result.empty(), true);
 }
 
-TEST(Filters, RatingAbove) { 
+TEST(Filters, RatingAbove) {
     BookDatabase db = makeBookDb();
     VectorBookRefs result = filterBooks(db.begin(), db.end(), RatingAbove(5.5));
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result[0].get().author, "Dreeke");
     EXPECT_EQ(result[1].get().author, "Brooks");
+
+    BookDatabase empty_db{};
+    auto empty_db_result = filterBooks(empty_db.begin(), empty_db.end(), RatingAbove(5.5));
+    EXPECT_EQ(empty_db_result.empty(), true);
 }
 
-TEST(Filters, GenreIs) { 
+TEST(Filters, GenreIs) {
     BookDatabase db = makeBookDb();
     VectorBookRefs result = filterBooks(db.begin(), db.end(), GenreIs(Genre::NonFiction));
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result[0].get().author, "Dreeke");
     EXPECT_EQ(result[1].get().author, "Brooks");
+
+    BookDatabase empty_db{};
+    auto empty_db_result = filterBooks(empty_db.begin(), empty_db.end(), GenreIs(Genre::NonFiction));
+    EXPECT_EQ(empty_db_result.empty(), true);
 }
 
-TEST(Filters, all_of) { 
+TEST(Filters, all_of) {
     BookDatabase db = makeBookDb();
     VectorBookRefs result = filterBooks(db.begin(), db.end(), all_of(GenreIs(Genre::NonFiction), RatingAbove(5.7)));
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0].get().author, "Dreeke");
 }
 
-TEST(Filters, any_of) { 
+TEST(Filters, any_of) {
     BookDatabase db = makeBookDb();
     VectorBookRefs result = filterBooks(db.begin(), db.end(), any_of(GenreIs(Genre::SciFi), RatingAbove(5.7)));
     EXPECT_EQ(result.size(), 2);

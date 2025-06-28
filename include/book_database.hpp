@@ -6,9 +6,9 @@
 #include <print>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
-#include <set>
 
 #include "book.hpp"
 #include "concepts.hpp"
@@ -19,7 +19,6 @@ namespace bookdb {
 template <BookContainerLike BookContainer = std::vector<Book>>
 class BookDatabase {
 public:
-    // Type aliases
     using value_type = BookContainer::value_type;
     using reference = BookContainer::reference;
     using pointer = BookContainer::pointer;
@@ -28,70 +27,54 @@ public:
     using difference_type = BookContainer::difference_type;
     using size_type = BookContainer::size_type;
 
-    iterator begin() {
-        return books_.begin();
-    }
-    iterator end() {
-        return books_.end();
-    }
-    const_iterator begin() const {
-        return books_.begin();
-    }
-    const_iterator end() const {
-        return books_.end();
+    using AuthorContainer = std::unordered_set<std::string, TransparentStringHash>;
+
+    BookDatabase() = default;
+    BookDatabase(std::initializer_list<Book> books) : books_(books) {
+        for (Book &book : books_) {
+            extractAuthor(book);
+        }
     }
 
-    using AuthorContainer = std::set<std::string, std::less<>>;
-    BookDatabase() = default;
-    BookDatabase(std::initializer_list<Book> books) 
-        : books_(books) {
-            for (Book& book : books_) {
-                extractAuthor(book);
-            }
-        }
+    iterator begin() { return books_.begin(); }
+    iterator end() { return books_.end(); }
+    const_iterator begin() const { return books_.begin(); }
+    const_iterator end() const { return books_.end(); }
 
     // Standard container interface methods
+    bool empty() const { return books_.empty(); }
     void clear() {
         books_.clear();
         authors_.clear();
     }
-    size_type size() const {
-        return books_.size();
-    }
+    size_type size() const { return books_.size(); }
 
-    reference operator[](size_type i){
-        return books_[i];
-    }
+    reference operator[](size_type i) { return books_[i]; }
+    const reference operator[](size_type i) const { return books_[i]; }
 
-    void push_back(Book&& book) {
+    void push_back(Book &book) {
         extractAuthor(book);
         books_.push_back(book);
     }
+    void push_back(Book &&book) { push_back(book); }
 
-    template<typename... Args>
-    reference emplace_back(Args&&... args) {
+    template <typename... Args>
+    reference emplace_back(Args &&...args) {
         reference result = books_.emplace_back(std::forward<Args>(args)...);
         extractAuthor(result);
         return result;
     }
 
-
-    const BookContainer& getBooks() const {
-        return books_;
-    }
-    const AuthorContainer& getAuthors() const {
-        return authors_;
-    }
+    const BookContainer &getBooks() const { return books_; }
+    const AuthorContainer &getAuthors() const { return authors_; }
 
 private:
     BookContainer books_;
     AuthorContainer authors_;
 
-    void extractAuthor(Book& book) {
-        if (!authors_.contains(book.author)) {
-            authors_.insert(std::string(book.author));
-        }
-        book.author = *authors_.find(book.author);
+    void extractAuthor(Book &book) {
+        auto [iter, success] = authors_.emplace(book.author);
+        book.author = *iter;
     }
 };
 
